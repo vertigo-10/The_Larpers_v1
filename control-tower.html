@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Control Tower</title>
+<style>
+  :root{
+    --bg:#05080f;
+    --panel:#0a1020;
+    --rule:#16233d;
+    --amber:#ffb01f;
+    --green:#38e07b;
+    --red:#ff4d4d;
+    --dim:#5d6f92;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--amber);
+    font-family:"Courier New",Courier,monospace;
+    padding:20px;
+    min-height:100vh;
+    letter-spacing:.06em;
+  }
+  /* subtle scanline haze so it reads as a lit board, not a webpage */
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(to bottom,rgba(0,0,0,0) 0 2px,rgba(0,0,0,.25) 2px 4px);
+    opacity:.4;
+  }
+
+  header{
+    border-bottom:2px solid var(--rule);
+    padding-bottom:14px;margin-bottom:4px;
+    display:flex;flex-wrap:wrap;gap:12px;
+    align-items:baseline;justify-content:space-between;
+  }
+  h1{
+    font-size:clamp(18px,3.4vw,34px);
+    font-weight:700;letter-spacing:.22em;
+    text-shadow:0 0 14px rgba(255,176,31,.35);
+  }
+  .sub{color:var(--dim);font-size:11px;letter-spacing:.3em;margin-top:6px}
+  #clock{
+    font-size:clamp(20px,3vw,32px);
+    color:var(--green);
+    text-shadow:0 0 14px rgba(56,224,123,.35);
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* alert banner — gate-change announcement */
+  #alert{
+    display:none;margin:14px 0;padding:10px 14px;
+    background:var(--red);color:#0a0000;
+    font-weight:700;letter-spacing:.2em;font-size:13px;
+  }
+  #alert.on{display:block;animation:flash .55s steps(1) infinite}
+  @keyframes flash{50%{background:#3a0000;color:var(--red)}}
+
+  .board{
+    background:var(--panel);
+    border:1px solid var(--rule);
+    margin-top:16px;overflow-x:auto;
+  }
+  table{width:100%;border-collapse:collapse;min-width:660px}
+  th{
+    text-align:left;padding:12px 14px;
+    font-size:11px;letter-spacing:.24em;color:var(--dim);
+    border-bottom:1px solid var(--rule);font-weight:400;
+  }
+  td{
+    padding:11px 14px;font-size:14px;
+    border-bottom:1px solid rgba(22,35,61,.55);
+    font-variant-numeric:tabular-nums;white-space:nowrap;
+  }
+  tbody tr:hover{background:rgba(22,35,61,.35)}
+
+  .s-normal{color:var(--green)}
+  .s-flagged{color:var(--amber)}
+  .s-blocked{color:var(--red);font-weight:700}
+
+  /* signature: new rows flip in like a split-flap tile */
+  @keyframes flap{
+    0%{transform:rotateX(-88deg);opacity:0}
+    60%{transform:rotateX(12deg);opacity:1}
+    100%{transform:rotateX(0);opacity:1}
+  }
+  tbody tr{transform-origin:top center;animation:flap .34s ease-out}
+
+  footer{
+    margin-top:18px;display:flex;justify-content:space-between;
+    flex-wrap:wrap;gap:10px;font-size:11px;color:var(--dim);
+    letter-spacing:.18em;
+  }
+  a{color:var(--amber);text-decoration:none;border-bottom:1px dotted var(--amber)}
+  a:hover,a:focus-visible{color:var(--green);border-color:var(--green);outline:none}
+
+  @media (prefers-reduced-motion:reduce){
+    tbody tr{animation:none}
+    #alert.on{animation:none}
+    body::after{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>NETWORK CONTROL TOWER</h1>
+    <div class="sub">DDoS DETECTION &middot; LIVE TRAFFIC BOARD</div>
+  </div>
+  <div id="clock">--:--:--</div>
+</header>
+
+<div id="alert">&#9888; GATE CHANGE &mdash; TRAFFIC BLOCKED AT GATE <span id="alertGate"></span></div>
+
+<div class="board">
+  <table>
+    <thead>
+      <tr>
+        <th>TIME</th>
+        <th>FLIGHT NO / SOURCE IP</th>
+        <th>GATE / DEST PORT</th>
+        <th>PACKETS</th>
+        <th>STATUS</th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+
+<footer>
+  <span>FEED: SIMULATED &middot; MODEL: PYTORCH / CICIDS2017</span>
+  <a href="index.html">&larr; BACK TO MAIN DASHBOARD</a>
+</footer>
+
+<script>
+/* ---------- live clock ---------- */
+function tick(){
+  document.getElementById('clock').textContent =
+    new Date().toTimeString().slice(0,8);
+}
+tick(); setInterval(tick, 1000);
+
+/* ---------- dummy feed ----------
+   TODO: replace with fetch() call to backend API
+   Expected shape from the model server:
+     [{ time, src_ip, dst_port, packets, status }]
+   e.g.
+     const res  = await fetch('/api/predictions');
+     const rows = await res.json();
+     rows.forEach(addRow);
+   Then delete makeRow() and the setInterval below.
+---------------------------------- */
+const PORTS  = [80, 443, 22, 8080, 3389, 53, 21];
+const STATUS = ['NORMAL','NORMAL','NORMAL','FLAGGED','BLOCKED'];
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+function makeRow(){
+  const s = rnd(STATUS);
+  return {
+    time: new Date().toTimeString().slice(0,8),
+    src_ip: `${rnd([10,172,192,45,103])}.${(Math.random()*255|0)}.${(Math.random()*255|0)}.${(Math.random()*255|0)}`,
+    dst_port: rnd(PORTS),
+    packets: s === 'BLOCKED' ? 40000 + (Math.random()*90000|0)
+                             : 200 + (Math.random()*4000|0),
+    status: s
+  };
+}
+
+const tbody = document.getElementById('rows');
+const MAX_ROWS = 14;
+
+function addRow(r){
+  const tr = document.createElement('tr');
+  tr.innerHTML =
+    `<td>${r.time}</td>
+     <td>${r.src_ip}</td>
+     <td>${r.dst_port}</td>
+     <td>${r.packets.toLocaleString()}</td>
+     <td class="s-${r.status.toLowerCase()}">${r.status}</td>`;
+  tbody.prepend(tr);
+  while(tbody.children.length > MAX_ROWS) tbody.lastElementChild.remove();
+  if(r.status === 'BLOCKED') raiseAlert(r.dst_port);
+}
+
+/* ---------- alert banner ---------- */
+const alertBox = document.getElementById('alert');
+let alertTimer;
+function raiseAlert(gate){
+  document.getElementById('alertGate').textContent = gate;
+  alertBox.classList.add('on');
+  clearTimeout(alertTimer);
+  alertTimer = setTimeout(() => alertBox.classList.remove('on'), 6000);
+}
+
+/* seed the board, then stream */
+for(let i=0;i<8;i++) addRow(makeRow());
+setInterval(() => addRow(makeRow()), 2200);
+</script>
+
+</body>
+</html>
