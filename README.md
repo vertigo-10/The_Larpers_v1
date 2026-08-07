@@ -22,3 +22,5 @@ Static UI only (no backend included). Runs on mock data out of the box.
 1. Push these files to a repo (e.g. GitHub Pages, or any static host).
 2. If your API is on a different domain, enable CORS on it.
 3. That's it — no build step, plain HTML/CSS/JS.
+
+The sentryv1.py file is the original neural network we trained with a snthetic dataset (a toy dataset created). When it is downloaded, open it in an IDE and press run to simply train the network and see all the data.
