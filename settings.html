@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Settings — SentryNet</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span>SentryNet</div>
+    <a class="nav-link" href="index.html">Dashboard</a>
+    <a class="nav-link" href="profile.html">Profile</a>
+    <a class="nav-link active" href="settings.html">Settings</a>
+    <div class="sidebar-foot">Neural net: CICIDS2017<br>PyTorch inference engine</div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar"><div><h1>Settings</h1><div class="sub">Connect the dashboard to your model's API</div></div></div>
+
+    <div class="panel" style="max-width:480px">
+      <div class="form-row">
+        <label>Model API endpoint</label>
+        <input id="apiUrl" type="text" placeholder="https://your-backend.example.com/api/predictions">
+      </div>
+      <div class="form-row">
+        <label>Poll interval (ms)</label>
+        <input id="pollMs" type="text" placeholder="2000">
+      </div>
+      <div class="form-row">
+        <label>Alert threshold (anomaly score)</label>
+        <input id="threshold" type="text" placeholder="0.80">
+      </div>
+      <button class="btn" onclick="saveSettings()">Save Settings</button>
+      <div id="saveMsg" style="margin-top:10px;color:var(--safe);font-size:13px;display:none">Saved locally. Edit CONFIG in app.js to hard-code defaults.</div>
+    </div>
+  </main>
+</div>
+<script>
+function saveSettings(){
+  localStorage.setItem('sentrynet_api', document.getElementById('apiUrl').value);
+  localStorage.setItem('sentrynet_poll', document.getElementById('pollMs').value);
+  localStorage.setItem('sentrynet_threshold', document.getElementById('threshold').value);
+  document.getElementById('saveMsg').style.display='block';
+}
+</script>
+</body>
+</html>

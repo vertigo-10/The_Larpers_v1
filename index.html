@@ -1,1 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SentryNet — DDoS Monitor</title>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="dot"></span>SentryNet</div>
+    <a class="nav-link active" href="index.html">Dashboard</a>
+    <a class="nav-link" href="profile.html">Profile</a>
+    <a class="nav-link" href="settings.html">Settings</a>
+    <div class="sidebar-foot">Neural net: CICIDS2017<br>PyTorch inference engine</div>
+  </aside>
 
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Network Overview</h1>
+        <div class="sub">Live traffic classified by the DDoS detection model</div>
+      </div>
+      <div class="status-pill"><span class="dot" id="statusDot"></span><span id="statusText">Model connected · monitoring</span></div>
+    </div>
+
+    <div class="cards">
+      <div class="card"><div class="label">Active Connections</div><div class="value" id="statConns">—</div></div>
+      <div class="card"><div class="label">Packets / sec</div><div class="value" id="statPkts">—</div></div>
+      <div class="card"><div class="label">Anomaly Score</div><div class="value safe" id="statScore">—</div></div>
+      <div class="card"><div class="label">Attacks Detected (24h)</div><div class="value alert" id="statAttacks">—</div></div>
+    </div>
+
+    <div class="grid">
+      <div class="panel">
+        <h2>Anomaly Score <span>Model confidence over time</span></h2>
+        <canvas id="threatChart" height="130"></canvas>
+      </div>
+      <div class="panel">
+        <h2>Traffic Breakdown</h2>
+        <canvas id="trafficDonut" height="180"></canvas>
+        <div style="margin-top:14px">
+          <div class="side-row"><span class="k">Benign</span><span class="v badge safe">Normal</span></div>
+          <div class="side-row"><span class="k">Suspicious</span><span class="v badge warn">Watch</span></div>
+          <div class="side-row"><span class="k">Malicious</span><span class="v badge alert">Blocked</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Live Connections <span id="tableUpdated">updating…</span></h2>
+      <table>
+        <thead><tr><th>Source IP</th><th>Port</th><th>Duration</th><th>Packets</th><th>Router</th><th>Classification</th></tr></thead>
+        <tbody id="liveTable"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
