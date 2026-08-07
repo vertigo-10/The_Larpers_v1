@@ -24,3 +24,5 @@ Static UI only (no backend included). Runs on mock data out of the box.
 3. That's it — no build step, plain HTML/CSS/JS.
 
 The sentryv1.py file is the original neural network we trained with a snthetic dataset (a toy dataset created). When it is downloaded, open it in an IDE and press run to simply train the network and see all the data.
+
+*IMPORTANT: For USING VERSION 2 The Zip File attached should be extracted. The Rest Of The Instructions to host it Locally is on the Version 2 github page https://github.com/vertigo-10/The_larpers_v2
